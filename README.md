@@ -19,7 +19,7 @@ The resulting monad will usually be a composition of the original monad, and the
 
 _The monadic type `TMonad` cannot change after a call to `f`; a `Maybe` monad cannot change to a `State` monad, but this also means that a `Maybe` monad can never read the value of a `State` monad by being bound to it. This is something I understood later when I started to question how to use different monads together._
 
-_The value type `V1` is free tp change as a result of calling `f`. this is why we denote the final result as `TMonad<V2>`; This doesn't prevent the value staying the same, in the same way that in a program, `x` can equal `1` and `y` can also equal `1`, `V1` could represent a `boolean` and `V2` could also represent a `boolean`_
+_The value type `V1` is free to change as a result of calling `f`. this is why we denote the final result as `TMonad<V2>`; This doesn't prevent the value staying the same, in the same way that in a program, `x` can equal `1` and `y` can also equal `1`, `V1` could represent a `boolean` and `V2` could also represent a `boolean`_
 
 ## A `unit`/`pure` method.
 The unit method follows this signature:
