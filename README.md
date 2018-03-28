@@ -408,8 +408,53 @@ The `solrClient` change looks more complicated, and that is because by design, t
 The final step for both cases is to use the `unit` method (here called `Lift`) to ensure our function returns the correct value inside the Tracker monad.
 
 # Promises and Monads in Javascript
-**Promises are not `monads`**; you can quote me on that. They have the required methods (namely `resolve` and `then`) and they follow the rules to a certain extent, but they were never created with the intention of being `monadic`. They were created with the intention of easing imperative style asynchronous code. [[source]](https://github.com/promises-aplus/promises-spec/issues/94#issuecomment-366157872)
+**Promises are not `monads`;** you can quote me on that. They have the required methods (namely `resolve` and `then`) and they follow the rules to a certain extent, but they were never created with the intention of being `monadic`. They were created with the intention of easing imperative style asynchronous code. [[source]](https://github.com/promises-aplus/promises-spec/issues/94#issuecomment-366157872)
 
 Even so, promises are useful. If we need to or want to create agnostic, reusable code, we can choose to use another library, or to monkey patch promises to make them conform. That being said, we will also have to monkey patch other non-conforming would-be-monads, and it is unlikely that Javascript will build convenient keywords that could help legibility any time soon.
 
 There are a lot of articles that discuss Promises and their impurity, but one article highlights a few pretty interesting side effects due to having eager execution. [[source]](https://staltz.com/promises-are-not-neutral-enough.html)
+
+**Promises are similar to `monads`.** Notice how with the `Maybe` monad, where we used the fake `monadic` keyword, we never do any error handling? With `async/await`, we group a sequence of operations together without any error handling. Until we exit the async function and get back a `Promise`, we can't really access the properties and methods of `Promise` directly and so we can't use the `catch` method.
+
+The point is to group a sequence of async operations without thinking about edge cases, and then handle the errors at the end. Consider this:
+```ts 
+fetch('http://www.my-url.com/endpoint')
+    .then(data => fetch('http://internal.com/get/' + data.id))
+    .then(person => Promise.delay(20).then(person))
+    .catch(err => handle(err))
+    .then(....);
+```
+
+Notice how there are a bunch of then's before the catch? Using the `async/await` syntax, we would end up with:
+
+```ts 
+async function doStuff() {
+    const data = await fetch('http://www.my-url.com/endpoint');
+    const person = await fetch('http://internal.com/get/' + data.id);
+    await Promise.delay(20);
+    return person;
+}
+async function doStuff2(promise) {
+    const data = await promise;
+    //.....
+}
+
+const stage1 = doStuff().catch(err => handle(err));
+const stage2 = doStuff2(step1);
+```
+
+No `try catches`. The downside is that your error handling moves elsewhere which can be a problem if you are used to handling errors in one place. There is another way though:
+```ts 
+async function doStuff() {
+    const person = await (async function() {
+        const data = await fetch('http://www.my-url.com/endpoint');
+        const person = await fetch('http://internal.com/get/' + data.id);
+        await Promise.delay(20);
+        return person;
+    })().catch(err => handle(err));
+    //... continue operations here using the person variable.
+}
+const all = doStuff();
+```
+
+I'm sure there are even better ways than this. There are many ways to skin a cat.
