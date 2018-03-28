@@ -29,9 +29,7 @@ The unit method follows this signature:
 function<T>(T value) => TMonad<T>
 ```
 
-This should be quite simple. You take a single value and store it in a way that makes sense for your monad. 
-
-_Note: _
+This should be quite simple. You take a single value and store it in a way that makes sense for your monad.
 
 ## The monadic laws.
 Yes laws; it turns out that function signatures aren't enough to describe this pattern and there needs to be some laws that are satisfied in order for a monadic type to be called a `Monad`. These laws ensure that all monads compose the same way and in some functional languages, they enable some pretty cool functions and operators that just work for all monadic types. FREE FUNCTIONALITY!!
