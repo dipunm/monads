@@ -1,11 +1,12 @@
 ```ts 
 class Historical {
+    // private
     constructor(value, history) {
         this.value = value;
         this.history = history || [value];
     }
 
-    bind(fn) {
+    fmap(fn) {
         const newH = fn(this.value);
         const largHistory = (
             newH.history.length > this.history.length ?
@@ -13,13 +14,26 @@ class Historical {
         const smalHistory = (
             newH.history.length > this.history.length ?
                 this.history : newH.history);
-                
+
         return new Historical(newH.value, [...largHistory, ...smalHistory])
+    }
+
+    static of(value) {
+        return new Historical(value, [value]);
     }
 }
 
-var h = new Historical(20);
-h.bind();
+const A = Historical.of(30)
+    .fmap(num => Historical.of(20))
+    .fmap(num => Historical.of(num + 10));
+const B = Historical.of(30)
+    .fmap(num => Historical
+        .of(20)
+        .fmap(num => Historical.of(num + 10))
+    );
+
+console.log('A', A);
+console.log('B', B);
 ```
 
 # Monads
