@@ -243,24 +243,16 @@ const monad = Future.from('readme.txt')
 Hopefully by now we understand the snippet above and what it does. `monad` will not contain the final value, but it will have a `Run` method that can eventually provide that value. What happens inside the fmap function is one of the things that blew my mind. This monad will contain a thunk that looks a bit like this:
 ```ts 
 () => {
-    const contents = (() => {
-        const filename = (() => {
-            const value = "readme.txt";
-            return value;
-        })();
-        
-        const readFile = (filename) => {
-            const handle = OS.readFile(filename);
-            const data = OS.waitFor(handle); 
-            return data.contents;
+    const contents = (
+        () => {
+            const filename = (
+                () => {
+                    return "readme.txt";
+                }
+            )();
+            return readFile(filename);
         }
-        return readFile(filename);
-    
-    })();
-
-    const getFirst20Chars = (contents) => {
-        return contents.substring(20);
-    }
+    )();
     return getFirst20Chars(contents);
 }
 ```
