@@ -14,11 +14,11 @@ class MonadicSolrClient extends SolrClient {
                 dateOfLastUpdated: data[data.length - 1].updatedDate
             })
             // change the monad value without affecting internal state.
-            .bind(() => Tracker.Lift(true));
+            .fmap(() => Tracker.from(true));
         }else {
             return Tracker.Errored()
                 // change the monad value without affecting internal state.
-                .bind(() => Tracker.Lift(false));
+                .fmap(() => Tracker.from(false));
         }
     }
 }

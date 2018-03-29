@@ -44,7 +44,7 @@ export class MonadicCursor extends Cursor {
 
     readNext(n) {
         return super.readNext(n)
-            .then(data => Tracker.Lift(data))
+            .then(data => Tracker.from(data))
             .catch(err => Tracker.Errored(err));
     }
 }

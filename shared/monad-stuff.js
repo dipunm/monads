@@ -21,7 +21,7 @@ Tracker.Monad = class {
         this.withTimer = withTimer;
     }
 
-    async bind(fn) {
+    async fmap(fn) {
         const timer = this.withTimer ? new Timer() : undefined;
         if(timer) timer.start();
         let newMonad;
@@ -77,7 +77,7 @@ Tracker.Monad = class {
     }
 };
 
-Tracker.Lift = function (value) {
+Tracker.from = function (value) {
     return new Tracker.Monad({}, value);
 };
 Tracker.RecordSuccess = function ({count, dateOfLastUpdated}) {
@@ -105,7 +105,7 @@ export async function runMonadic(func, ...args) {
     const it = await func(...args);
     async function cont(lastVal) {
         const { done, value: m } = await it.next(lastVal);
-        return !done ? m.bind(cont) : m;
+        return !done ? m.fmap(cont) : m;
     }
     return await cont();
 }

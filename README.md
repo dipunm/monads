@@ -4,7 +4,7 @@ A monad is any type construct that follows a specific pattern; it works in the s
 Monads are hard to get our heads around because they are very generic. They are defined by having 2 methods:
 
 ## A `bind`/`fmap` method.
-The bind method follows this signature:
+The fmap method follows this signature:
 ```typescript
 // Given a monadic type TMonad with value V1,
 // and a method that takes V1 and returns the same 
@@ -21,8 +21,8 @@ _The monadic type `TMonad` cannot change after a call to `f`; a `Maybe` monad ca
 
 _The value type `V1` is free to change as a result of calling `f`. this is why we denote the final result as `TMonad<V2>`; This doesn't prevent the value staying the same, in the same way that in a program, `x` can equal `1` and `y` can also equal `1`, `V1` could represent a `boolean` and `V2` could also represent a `boolean`_
 
-## A `unit`/`pure` method.
-The unit method follows this signature:
+## A `unit`/`pure`/`from` method.
+The from method follows this signature:
 ```typescript
 // Given a value of type T, return a monadic value TMonad
 // that holds the provided value.
@@ -35,62 +35,62 @@ This should be quite simple. You take a single value and store it in a way that 
 Yes laws; it turns out that function signatures aren't enough to describe this pattern and there needs to be some laws that are satisfied in order for a monadic type to be called a `Monad`. These laws ensure that all monads compose the same way and in some functional languages, they enable some pretty cool functions and operators that just work for all monadic types. FREE FUNCTIONALITY!!
 
 ### Left Identity
-`unit x >>= f ≡ f x`
-Given a monad of `x` created with the `unit` method, when bound to the function `f`, the resulting monad should be identical to simply providing `x` to the function `f`.
+`from x >>= f ≡ f x`
+Given a monad of `x` created with the `from` method, when bound to the function `f`, the resulting monad should be identical to simply providing `x` to the function `f`.
 
-Keep in mind that `f` will return a Monad, the monad that `f` produces should be no different than the monad that is a composition of what `unit` produced, and what `f` produces.
+Keep in mind that `f` will return a Monad, the monad that `f` produces should be no different than the monad that is a composition of what `from` produced, and what `f` produces.
 ```ts 
-unit(x).bind(fn);
+from(x).fmap(fn);
 // is the same as:
 fn(x);
-// given that fn returns a monadic value of the same time of unit.
+// given that fn returns a monadic value of the same return type of from.
 
-[10].bind(x => posAndNeg(x)); //=[10, -10];
+[10].fmap(x => posAndNeg(x)); //=[10, -10];
 posAndNeg(10); //=[10, -10];
 ```
 
 ### Right Identity
-`m >>= unit ≡ m`
-Given a monad `m`, when bound to the function `unit`, the resulting monad should be identical to `m`. This is the same law written in reverse and is designed to ensure that the merge logic works bi-directionally.
+`m >>= from ≡ m`
+Given a monad `m`, when bound to the function `from`, the resulting monad should be identical to `m`. This is the same law written in reverse and is designed to ensure that the merge logic works bi-directionally.
 ```ts 
-monad.bind(unit);
+monad.fmap(from);
 // is the same as:
 monad;
 
-// x => [x] is basically the unit function for arrays.
-[1,2,3,4].bind(x => [x]); // [1,2,3,4]
+// x => [x] is basically the from function for arrays.
+[1,2,3,4].fmap(x => [x]); // [1,2,3,4]
 ```
 
 ### Associativity
 `(m >>= f) >>= g ≡ m >>= (\x -> f x >>= g)`
-This one is a little harder to stomach, but it enforces the same rules we saw above, but this time from the point of view that you are working with monads that are more complex than the `unit` monad.
+This one is a little harder to stomach, but it enforces the same rules we saw above, but this time from the point of view that you are working with monads that are more complex than the `from` monad.
 
 ```ts 
-const monAF = monA.bind(fnF);
-const monAFG = monAF.bind(fnG);
+const AF = A.fmap(v => {const F = fnF(v); return F;});
+const AFG = AF.fmap(v => {const G = fnG(v); return G;});
 // -----
-const monAFG = monA.bind(x => {
-    const monF = fnF(x);
-    const monFG = monF.bind(fnG);
-    return monFG;
+const AFG = A.fmap(x => {
+    const F = fnF(x);
+    const FG = F.fmap(fnG);
+    return FG;
 })
 ```
-The two code examples above create monAFG but the merging of the monads happen in opposite orders. The first example creates merges `monA` to `monF` (the monad produced from `fnF`) and then `monAF` is merged with `monG` to give `monAFG`. The second example takes the value from `monA`, creates `monF`, merges it with `monG` (implicitly by binding it to `fnG`) to produce `monFG` and then finally merges `monA` with `monFG`.
+The two code examples above create `AFG` but the merging of the monads happen in opposite orders. The first example creates merges `A` to `F` (the monad produced from `fnF`) and then `AF` is merged with `G` to give `AFG`. The second example takes the value from `A`, creates `F`, merges it with `G` (implicitly by fmapping it to `fnG`) to produce `FG` and then finally merges `A` with `FG`.
 
-The point is that it shouldn't matter in what order these monads are created or merged to each other, `monAFG` in both cases should be identical.
+The point is that it shouldn't matter in what order these monads are created or merged to each other, `AFG` in both cases should be identical.
 
 _Caveat: if we were working with immutable types, the two monads would be identical, however if not, then the only difference between the two monads should be where they are in memory. All of the internal values should be identical._
 
 ```ts 
-[1,2].bind(posAndNeg).bind(selfAndDouble) // =[1, 2 ,-1, -2, 2, 4, -2, -4]
-[1,2].bind(x => posAndNeg(x).bind(selfAndDouble)) // =[1, 2, -1, -2, 2, 4, -2, -4]
+[1,2].fmap(posAndNeg).fmap(selfAndDouble) // =[1, 2 ,-1, -2, 2, 4, -2, -4]
+[1,2].fmap(x => posAndNeg(x).fmap(selfAndDouble)) // =[1, 2, -1, -2, 2, 4, -2, -4]
 ```
 
 ## Oh by the way
-If you were wondering about `map`, you can always create it using `fmap` and `unit`, watch this:
+If you were wondering about `map`, you can always create it using `fmap` and `from`, watch this:
 ```ts 
 function map(monad, fn) {
-    return monad.bind(x => unit(fn(x)));
+    return monad.fmap(x => from(fn(x)));
 }
 ```
 
@@ -120,21 +120,21 @@ So how does the `Maybe` monad merge? Just like the array, we take each value we 
 - If the new monad is `Just x` we just return it.
 - If the new monad is `Nothing` we still just return it.
 
-The moment we have `Nothing`, any function `f` provided to the `bind` function becomes uncallable; we have no value to give to it. At this point, we just return a new `Nothing` that returns a nothing of type `T2` where `TMonad<T2>` represents the type that `f` would have returned. (assuming we are in a typed language.)
+The moment we have `Nothing`, any function `f` provided to the `fmap` function becomes uncallable; we have no value to give to it. At this point, we just return a new `Nothing` that returns a nothing of type `T2` where `TMonad<T2>` represents the type that `f` would have returned. (assuming we are in a typed language.)
 
-That was the mechanics of a `Maybe`, but what is it useful for? Due to it's nature, it is very good at taking a sequence of computations, each that could fail to produce a value and `fail-fast` or terminate early as soon as it gets a `Nothing`. None of the following `f` in `bind(f)` are ever executed which can save computation time.
+That was the mechanics of a `Maybe`, but what is it useful for? Due to it's nature, it is very good at taking a sequence of computations, each that could fail to produce a value and `fail-fast` or terminate early as soon as it gets a `Nothing`. None of the following `f` in `fmap(f)` are ever executed which can save computation time.
 
 Here is an example of a typical use of the `Maybe` monad:
 
 ```ts 
 const x = "hello micheal";
-const specialLetter = Maybe.unit(x)
-    .bind(removeHelloOrReturnNothing) // gives us Just("micheal").
-    .bind(get10thChar) // there is no 10th character, return Nothing().
+const specialLetter = Maybe.from(x)
+    .fmap(removeHelloOrReturnNothing) // gives us Just("micheal").
+    .fmap(get10thChar) // there is no 10th character, return Nothing().
 
-// note: the use of Maybe.unit here allows us to take a non monadic value 
-// and convert it into a monadic value to be merged by the bind method.
-    .bind(x => Maybe.unit(uppercase(x))); // nothing to uppercase.
+// note: the use of Maybe.from here allows us to take a non monadic value 
+// and convert it into a monadic value to be merged by the fmap method.
+    .fmap(x => Maybe.from(uppercase(x))); // nothing to uppercase.
 
 
 if(specialLetter.hasValue) {
@@ -150,7 +150,7 @@ In Haskell, there is a convenience syntax called the `do` notation. This allows 
 
 ```ts 
 // the monadic "keyword" would inform the interpreter to convert 
-// this function to a chain of bind calls.
+// this function to a chain of fmap calls.
 // Another way to look at this, is that it enforces that the 
 // return value is a monad and that this monad is the same type
 // that the capture keyword has been handling.
@@ -160,7 +160,7 @@ monadic function getSpecialLetter(greetingMessage) {
     const name = capture removeHelloOrReturnNothing(greetingMessage);
     const char = capture get10thChar(name);
     const specialValue = uppercase(char);
-    return Maybe.unit(specialValue);
+    return Maybe.from(specialValue);
 }
 ```
 
@@ -199,7 +199,7 @@ function divide(x, y) {
 }
 
 const total = divide(4, 20);
-// aka: Either.Left(4).bind(x => divide(x, 20));
+// aka: Either.Left(4).fmap(x => divide(x, 20));
 
 if(total.isLeft()) {
     doSomethingAwesome(total.Left);
@@ -241,12 +241,12 @@ This is an example of what an asynchronous thunk may look like. It works with th
 I intentionally embedded this thunk inside a factory method to show how a thunk could depend on a value even though it takes no parameters.
 
 ```ts
-const monad = Future.unit('readme.txt')
-    .bind(Future.readFile)
-    .bind(contents => Future.unit(getFirst20Chars(contents)));
+const monad = Future.from('readme.txt')
+    .fmap(Future.readFile)
+    .fmap(contents => Future.from(getFirst20Chars(contents)));
 ```
 
-Hopefully by now we understand the snippet above and what it does. `monad` will not contain the final value, but it will have a `Run` method that can eventually provide that value. What happens inside the bind function is one of the things that blew my mind. This monad will contain a thunk that looks a bit like this:
+Hopefully by now we understand the snippet above and what it does. `monad` will not contain the final value, but it will have a `Run` method that can eventually provide that value. What happens inside the fmap function is one of the things that blew my mind. This monad will contain a thunk that looks a bit like this:
 ```ts 
 () => {
     const contents = (() => {
@@ -271,17 +271,17 @@ Hopefully by now we understand the snippet above and what it does. `monad` will 
 }
 ```
 
-Each time we bind, we don't execute the provided function, we build a thunk around it. The last action to be added is the last action to be executed and its return value will match the final monads value type.
+Each time we fmap, we don't execute the provided function, we build a thunk around it. The last action to be added is the last action to be executed and its return value will match the final monads value type.
 
 When executed, the program will recursively call the old thunks until it gets it's first returned value,and the final value comes by traversing back up the call stack.
 
 ## Let's summarise
- - A monad is any type that has a `unit` method and a `bind` method.
+ - A monad is any type that has a `from` method and a `fmap` method.
  - The two methods can be given any name, but for us to take full advantage and build agnostic, reusable methods, we should keep them consistent.
  - In order to satisfy these methods, a monad should have some concept of a boxed value.
  - A monad always generalises over a value type. (like `List<T>`)
- - The two methods `unit` and `bind` must follow a set of laws.
- - The `bind` function should merge `monadA` and `monadB` (the result of calling the provided function) to get a new monad which generalises over the same value type as `monadB`.
+ - The two methods `from` and `fmap` must follow a set of laws.
+ - The `fmap` function should merge `monadA` and `monadB` (the result of calling the provided function) to get a new monad which generalises over the same value type as `monadB`.
  - A `monad` can hold 0 or more of its generalised value type.
  - A `monad` can build an internal state. (building state is not the same as mutating state)
  - Knowing what a `monad` is, does not help us know what a `monad` does.
@@ -377,7 +377,7 @@ export class MonadicCursor extends Cursor {
 
     readNext(n) {
         return super.readNext(n)
-            .then(data => Tracker.Lift(data))
+            .then(data => Tracker.of(data))
             .catch(err => Tracker.Errored(err));
     }
 }
@@ -391,11 +391,11 @@ class MonadicSolrClient extends SolrClient {
                 dateOfLastUpdated: data[data.length - 1].updatedDate
             })
             // change the monad value without affecting internal state.
-            .bind(() => Tracker.Lift(true));
+            .fmap(() => Tracker.of(true));
         }else {
             return Tracker.Errored()
                 // change the monad value without affecting internal state.
-                .bind(() => Tracker.Lift(false));
+                .fmap(() => Tracker.of(false));
         }
     }
 }
@@ -405,7 +405,7 @@ The `cursor` change is pretty simple, we return the value wrapped in a Tracker m
 
 The `solrClient` change looks more complicated, and that is because by design, the solrClient was built to return a boolean that represented if it was successful instead of throwing an error. Instead of relying on `catch` to split the logic, we use an `if` statement. If successful, we track information about what happened, if not, we indicate Errored without any context (we have none ourselves because any internal exceptions would be handled).
 
-The final step for both cases is to use the `unit` method (here called `Lift`) to ensure our function returns the correct value inside the Tracker monad.
+The final step for both cases is to use the `from` method (here called `of`) to ensure our function returns the correct value inside the Tracker monad.
 
 # Promises and Monads in Javascript
 **Promises are not `monads`;** you can quote me on that. They have the required methods (namely `resolve` and `then`) and they follow the rules to a certain extent, but they were never created with the intention of being `monadic`. They were created with the intention of easing imperative style asynchronous code. [[source]](https://github.com/promises-aplus/promises-spec/issues/94#issuecomment-366157872)
