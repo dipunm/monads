@@ -1,3 +1,7 @@
+/**
+ * Records a log of historical values.
+ * Each time we want to remember a value, we call .record
+ */
 class Historical {
     // private
     constructor(value, history) {
@@ -5,6 +9,12 @@ class Historical {
         this.history = history || [value];
     }
 
+    static of(value) {
+        return new Historical(value, [value]);
+    }
+    static record(value) {
+        return this.of(value);
+    }
     fmap(fn) {
         const newH = fn(this.value);
         // Bad Assumption: the largest history from both 
@@ -20,23 +30,17 @@ class Historical {
 
         // Fix: The order of histories should merge consistently regardless of size
     }
-
-    static of(value) {
-        return new Historical(value, [value]);
-    }
 }
 
-const A = Historical.of(30)
-    .fmap(num => 
-        Historical.of(num == 30 ? 20 : num))
-    .fmap(num => 
-        Historical.of(num + 40));
+const A = Historical.record(30)
+    .fmap(num => Historical.record(20))
+    .fmap(num => Historical.record(num + 40));
 
-const B = Historical.of(30)
-    .fmap(num => 
-        Historical.of(num == 30 ? 20 : num)
-            .fmap(num => 
-                Historical.of(num + 40)));
+
+const B_ = Historical.record(20)
+            .fmap(num => Historical.record(num + 40));
+const B = Historical.record(30)
+            .fmap(num => B_);
 
 console.log('A', A);
 console.log('B', B);

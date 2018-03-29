@@ -164,9 +164,7 @@ monadic function getSpecialLetter(greetingMessage) {
 }
 ```
 
-From here, it should be clear that the `Maybe` monad is allowing us to write our sequence of operations without worrying about the edge case of Nothing being returned. It `fails-fast™`. Once the sequence is complete, you usually need to take care of the `Nothing` by executing a backup plan, and by possiblt logging an error. In the case it didn't fail, usually the `Maybe` type has done it's job and the resulting internal value is what you're really after.
-
-_So why was it called `Maybe` instead of `FailFast` or something like that? Because mathematicians and functional programmers._ `¯\_(ツ)_/¯`
+From here, it should be clear that the `Maybe` monad is allowing us to write our sequence of operations without worrying about the edge case of Nothing being returned. It will `fails-fast™`. Once the sequence is complete, you usually need to take care of the `Nothing` by executing a backup plan, and by possiblt logging an error. In the case it didn't fail, usually the `Maybe` type has done it's job and the resulting internal value is what you're really after.
 
 ### Either a
 The `Either` monad is interesting. Monads must only represent 1 value type. `Either` is known to represent 2 value types.
@@ -198,8 +196,7 @@ function divide(x, y) {
     return Either.Left<string, int>(x/y)
 }
 
-const total = divide(4, 20);
-// aka: Either.Left(4).fmap(x => divide(x, 20));
+const total = divide(20, 2).fmap(n => divide(n, 2));
 
 if(total.isLeft()) {
     doSomethingAwesome(total.Left);
@@ -208,6 +205,8 @@ if(total.isLeft()) {
     doSomethingElse();
 }
 ```
+
+_So why was it called `isLeft` instead of `hasError` or something like that? Because mathematicians and functional programmers._ `¯\_(ツ)_/¯`
 
 ### Future
 First of all, this is not a `Promise`, even though it looks and feels like one; the main difference is that this type is lazy and `Promises` are eager.
