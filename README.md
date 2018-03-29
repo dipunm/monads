@@ -10,7 +10,7 @@ The fmap method follows this signature:
 // and a method that takes V1 and returns the same 
 // monadic type TMonad but with value V2,
 // Produce a monadic type TMonad with value V2.
-function<TMonad<V1>, TMonad<V2>> (TMonad<V1> m, ((V1 v) => TMonad<V2>) f) => TMonad<V2>
+function (TMonad<V1> m, Func<V1, TMonad<V2>> f) => TMonad<V2>
 ```
 
 From the signature, it appears that we should give the value V1 to the function `f` and return the TMonad from that call. The ability to control the usage of that function and the ability to intercept the return value is where it gets interesting.
@@ -26,7 +26,7 @@ The from method follows this signature:
 ```typescript
 // Given a value of type T, return a monadic value TMonad
 // that holds the provided value.
-function<T>(T value) => TMonad<T>
+function (T value) => TMonad<T>
 ```
 
 This should be quite simple. You take a single value and store it in a way that makes sense for your monad.
