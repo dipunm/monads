@@ -108,6 +108,8 @@ Now we want to know all the positions after 2 moves. We can take each of the sin
 
 This is where the merge comes to play. The merge happened in the first instance too, but it's more obvious here. The basic list monad will concatenate the lists. Each operation can actually change the type T to say T2, but the resulting list will then have all resulting values with the same type T2. At least in a typed language. `¯\_(ツ)_/¯`
 
+To see an example of what a List monad does internally, and how code would look without it, have a look at [listComposition.js](listComposition.js)
+
 _One thing to keep note of, is that the value stored within a monad should not be restricted. That is we should not expect any special type of value. In haskell, `Set` cannot be a monad because a `Set` requires that it's values are orderable and therefore must implement the interface `Ord`. That being said, I have read about `restricted monads` which is a concept that exists in order to work around this problem. This is beyond the scope of my knowledge, but I wonder if it applies in Javascript where everything can be compared?_
 
 ### Maybe
@@ -146,25 +148,18 @@ if(specialLetter.hasValue) {
 
 Notice that at the end, we use 2 properties: `hasValue` and `Value`. These are not part of it's monadic properties in the same way that `length` is not a part of the monadic properties of `List`. They are, however very useful.
 
-In Haskell, there is a convenience syntax called the `do` notation. This allows us to write our code in a somewhat procedural looking way. The closest thing to this in Javascript is `async/await`, except it only works for `Promises`. Let's create a pseudo keyword for Javascript that allows us to demonstrate this notation in an understandable format. We'll call them `monadic` and `capture`, synonymous to `async` and `await`.
+In Haskell, there is a convenience syntax called the `do` notation. This allows us to write our code in a somewhat procedural looking way. The closest thing to this in Javascript is the generator function syntax. I won't go into detail about what we need to do to get this code working in a real application, but I will show what a monadic code could look like.
 
 ```ts 
-// the monadic "keyword" would inform the interpreter to convert 
-// this function to a chain of fmap calls.
-// Another way to look at this, is that it enforces that the 
-// return value is a monad and that this monad is the same type
-// that the capture keyword has been handling.
-monadic function getSpecialLetter(greetingMessage) {
-    // the capture "keyword" would inform the interpreter to assign
-    // the value part of the returned monad to the name variable.
-    const name = capture removeHelloOrReturnNothing(greetingMessage);
-    const char = capture get10thChar(name);
+function* getSpecialLetter(greetingMessage) {
+    const name = yield removeHelloOrReturnNothing(greetingMessage);
+    const char = yield get10thChar(name);
     const specialValue = uppercase(char);
     return Maybe.from(specialValue);
 }
 ```
 
-From here, it should be clear that the `Maybe` monad is allowing us to write our sequence of operations without worrying about the edge case of Nothing being returned. It will `fails-fast™`. Once the sequence is complete, you usually need to take care of the `Nothing` by executing a backup plan, and by possiblt logging an error. In the case it didn't fail, usually the `Maybe` type has done it's job and the resulting internal value is what you're really after.
+Pretty simple, standard looking code. Hopefully, it should by now be clear that the `Maybe` monad is allowing us to write our sequence of operations without worrying about the edge case of Nothing being returned. It will `fails-fast™`. Once the sequence is complete, you usually need to take care of the `Nothing` by executing a backup plan, and by possibly logging an error. In the case it didn't fail, usually the `Maybe` type has done it's job and the resulting internal value is what you're really after.
 
 ### Either a
 The `Either` monad is interesting. Monads must only represent 1 value type. `Either` is known to represent 2 value types.
