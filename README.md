@@ -1,3 +1,41 @@
+```ts 
+class Historical {
+    // private
+    constructor(value, history) {
+        this.value = value;
+        this.history = history || [value];
+    }
+
+    fmap(fn) {
+        const newH = fn(this.value);
+        const largHistory = (
+            newH.history.length > this.history.length ?
+                newH.history : this.history);
+        const smalHistory = (
+            newH.history.length > this.history.length ?
+                this.history : newH.history);
+
+        return new Historical(newH.value, [...largHistory, ...smalHistory])
+    }
+
+    static of(value) {
+        return new Historical(value, [value]);
+    }
+}
+
+const A = Historical.of(30)
+    .fmap(num => Historical.of(20))
+    .fmap(num => Historical.of(num + 10));
+const B = Historical.of(30)
+    .fmap(num => Historical
+        .of(20)
+        .fmap(num => Historical.of(num + 10))
+    );
+
+console.log('A', A);
+console.log('B', B);
+```
+
 # Monads
 A monad is any type construct that follows a specific pattern; it works in the same way as other design patterns. The .NET `ApplicationContext` is a `singleton` in the same way that `Array` is a `Monad`. Something being a monad does not define it's purpose; in the same way that a `class` can implement many interfaces, a monadic type can also conform to many patterns to increase it's usefulness.
 
