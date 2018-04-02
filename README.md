@@ -400,7 +400,7 @@ Even so, promises are useful. If we need to or want to create agnostic, reusable
 
 There are a lot of articles that discuss Promises and their impurity, but one article highlights a few pretty interesting side effects due to having eager execution. [[source]](https://staltz.com/promises-are-not-neutral-enough.html)
 
-**Promises are similar to `monads`.** Notice how with the `Maybe` monad, where we used the fake `monadic` keyword, we never do any error handling? With `async/await`, we group a sequence of operations together without any error handling. Until we exit the async function and get back a `Promise`, we can't really access the properties and methods of `Promise` directly and so we can't use the `catch` method.
+**Promises are like `monads`.** Notice how with the `Maybe` monad, where we used the `generator function` syntax, we never do any error handling inside? When using `async/await`, if we are trying to write like for like code, we should be grouping a sequence of asynchronous operations together without any error handling aswell. Until we exit the async function and get back a `Promise`, we can't really access the properties and methods of `Promise` directly and so we can't use the `catch` method.
 
 The point is to group a sequence of async operations without thinking about edge cases, and then handle the errors at the end. Consider this:
 ```ts 
@@ -420,16 +420,17 @@ async function doStuff() {
     await Promise.delay(20);
     return person;
 }
-async function doStuff2(promise) {
-    const data = await promise;
+async function doStuff2(data) {
     //.....
 }
 
 const stage1 = doStuff().catch(err => handle(err));
-const stage2 = doStuff2(step1);
+const stage2 = stage1.then(doStuff2);
 ```
 
-No `try catches`. The downside is that your error handling moves elsewhere which can be a problem if you are used to handling errors in one place. There is another way though:
+I intentionally did not use `try/catches` because that would be a change in logic, but now we end up separating logic into multiple areas. This type of separation can start to become non-sensical; your error handling moves away which can be a problem if you are used to executing logic and handling errors in one place.
+
+There is another way though:
 ```ts 
 async function doStuff() {
     const person = await (async function() {
@@ -437,10 +438,14 @@ async function doStuff() {
         const person = await fetch('http://internal.com/get/' + data.id);
         await Promise.delay(20);
         return person;
-    })().catch(err => handle(err));
+    })().catch(err => {
+        return handle(err)
+    });
     //... continue operations here using the person variable.
 }
-const all = doStuff();
+doStuff();
 ```
 
-I'm sure there are even better ways than this. There are many ways to skin a cat.
+Embedding functions inside one another is quite normal in Javascript. There are concerns amongst my fellow peer developers that using `try/catch` to handle errors generally causes performance issues. Exceptions should be for exceptional cases; yet many promises reject for valid reasons without exceptions and using the catch method for promises feels less controversial than using a `try/catch` pair. Happily, the level of nesting remains consistent and so do variable scopes (_maybe not for vars_) so this style of code can feel familiar, be easier to reason about, and should be easier to debug than the declaritive style of programming that promise chaining provides.
+
+The biggest downside is that `return` keyword doesn't terminate the function anymore so formatting it to look like a try/catch may cause misunderstandings down the line; only experimentation and time can tell. There could be better ways to avoid using try/catch unnecessarily whilst keeping the style more procedural looking. There are many ways to skin a cat.
