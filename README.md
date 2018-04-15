@@ -183,12 +183,12 @@ As a monadic type, `Either` is very similar to `Maybe`. It can hold either 1 or 
 ```ts
 function divide(x, y) {
     if (y === 0) {
-        return Either.Right<string, int>("cannot divide ${x} by zero");
+        return Either.Left<string, int>("cannot divide ${x} by zero");
     }
     if (x % y !== 0) {
-        return Either.Right<string, int>("${y} does not divide into ${x} equally");
+        return Either.Left<string, int>("${y} does not divide into ${x} equally");
     }
-    return Either.Left<string, int>(x/y)
+    return Either.Right<string, int>(x/y)
 }
 
 const total = divide(20, 2).fmap(n => divide(n, 2));
